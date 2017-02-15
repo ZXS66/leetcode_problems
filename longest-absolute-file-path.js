@@ -1,18 +1,18 @@
 // https://leetcode.com/problems/longest-absolute-file-path/
-
+// https://discuss.leetcode.com/topic/55345/this-problem-is-not-well-defined-it-should-state-that-4-space-is-considered-as-a-tab-under-certain-situation
 /**
  * @param {string} input
  * @return {number}
  */
 var lengthLongestPath = function (input) {
-	var reg_file = /[^\n\t]*\.[^\n\t]+/gi;
 	var paths = input.split('\n');
 	var temp_paths = [];
 	var longestLength = 0;
 	var i, p, d, l;
-
+	
 	function depth(path) {
-		return path.length - path.trim().length;
+		var reg = /[^\t]/g;
+		return reg.exec(path).index;
 	}
 	for (i = 0; i < paths.length; i++) {
 		p = paths[i];
@@ -26,7 +26,7 @@ var lengthLongestPath = function (input) {
 				longestLength = l;
 		} else {
 			// directory
-			temp_paths[d] = p.trim();
+			temp_paths[d] = p.replace(/\t/g,'');
 		}
 	}
 	return longestLength;
