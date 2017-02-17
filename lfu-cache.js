@@ -1,20 +1,21 @@
 "use strict";
 
 class CacheUsage {
-	constructor(key) {
+	constructor(key, counter) {
 		this.key = key;
+		/** the amount of hits */
 		this.hits = 0;
-		this.recentlyUsedTime = Date.now();
+		/** save counter state for the last hit  */
+		this.lastHitNo = counter;
 	}
-	/** increment hits, update recentlyUsedTime */
-	hit() {
+	/** increment hits, update lastHitNo */
+	hit(counter) {
 		this.hits++;
-		this.recentlyUsedTime = Date.now();
+		this.lastHitNo = counter;
 	}
 }
-
 function sortCacheUsage(u1, u2) {
-	return u1.hits === u2.hits ? u1.recentlyUsedTime - u2.recentlyUsedTime : u1.hits - u2.hits;
+	return u1.hits === u2.hits ? u1.lastHitNo - u2.lastHitNo : u1.hits - u2.hits;
 }
 
 /**
@@ -23,8 +24,10 @@ function sortCacheUsage(u1, u2) {
 var LFUCache = function (capacity) {
 	this.capacity = capacity > 0 ? capacity : 0;
 	this.store = new Map();
-	//metadata for cache usage (hits, recentlyUsedTime)
+	//metadata for cache usage (hits, lastHitNo)
 	this.usage = new Map();
+	/** how many times the get function called */
+	this.counter = 0;
 };
 
 /** 
@@ -32,11 +35,10 @@ var LFUCache = function (capacity) {
  * @return {number}
  */
 LFUCache.prototype.get = function (key) {
-	// return this.store.has(key)?this.store.get(key):-1;
 	if (!this.store.has(key))
 		return -1;
 	// update usage
-	this.usage.get(key).hit();
+	this.usage.get(key).hit(++this.counter);
 	return this.store.get(key);
 };
 
@@ -53,7 +55,7 @@ LFUCache.prototype.put = function (key, value) {
 	if (this.store.has(key)) {
 		// update value if the key is already exist
 		this.store.set(key, value);
-		this.usage.get(key).hit();
+		this.usage.get(key).hit(++this.counter);
 	} else {
 		// insert value with new key
 		if (this.store.size === this.capacity) {
@@ -69,7 +71,7 @@ LFUCache.prototype.put = function (key, value) {
 			}
 		}
 		this.store.set(key, value);
-		this.usage.set(key, new CacheUsage(key));
+		this.usage.set(key, new CacheUsage(key, ++this.counter));
 	}
 };
 
